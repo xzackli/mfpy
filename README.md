@@ -1,2 +1,2 @@
-# mfl
+# mfpy
 multi frequency likelihood
