@@ -1,4 +1,4 @@
 # mfpy
 multi frequency likelihood
 
-![example plot][dl.png]
+![example plot](dl.png)
