@@ -1,12 +1,10 @@
-# %%
-%matplotlib inline
-%load_ext autoreload
-%autoreload 2
-%config InlineBackend.figure_format = 'retina'
 
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
+from itertools import product
+from mfpy import CrossSpectrum, MultiFrequencyLikelihood
+
 
 def δ(x,y):
     return float(x == y)
@@ -62,6 +60,39 @@ def Cov_bb_Das(Cb, α, A, β, B, γ, C, τ, D):
     print(N)
     return term0 + term1 + term2
 
+
+# %%
+
+def get_ACT_equatorial():
+    root_dir = 'data/data_act/equa/'
+    freqs = ('148', '220')
+    seasons = ('3e', '4e')
+
+    # read spectra
+    spectra = {}
+    for f1, f2, s1, s2 in product(freqs, freqs, seasons, seasons):
+        if ((f1 == '220' and f2 == '148') or
+            ((s1 == '4e' and s2 == '3e') and f1 == f2)):
+            file = f'{root_dir}spectrum_{f2}x{f1}_season{s2}xseason{s1}.dat'
+        else:
+            file = f'{root_dir}spectrum_{f1}x{f2}_season{s1}xseason{s2}.dat'
+        cls = np.genfromtxt(file, dtype=[('l', 'int64'), ('cl', 'd'), ('nl', 'd')])
+        spectra[(f1, f2, s1, s2)] = CrossSpectrum(cls['l'], cls['cl'], cls['nl'])
+
+    # read windows
+    windows = {}
+    for f1, f2 in product(('148', '220'), repeat=2):
+        file = f'{root_dir}BblMean_{f1}x{f2}_season4exseason4e.dat'
+        if f1 == '220' and f2 == '148':
+            file = f'{root_dir}BblMean_{f2}x{f1}_season4exseason4e.dat'
+        windows[(f1,f2)] = np.genfromtxt(file)[:,1:].T
+
+
+    likelihood = MultiFrequencyLikelihood(frequencies=freqs,
+                                          seasons=seasons,
+                                          spectra_dict=spectra,
+                                          Bbl_dict=windows)
+    return likelihood
 # %%
 
 highell_likelihood_dict = {
